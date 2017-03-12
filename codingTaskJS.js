@@ -36,7 +36,7 @@ function startPage() {
 }
 function initiateTest() {
 
-    stimulusID = Math.floor((Math.random() * 8) + 1);
+    stimulusID = Math.floor((Math.random() * 9) + 0);
     if (stimulusID == lastStimulus) { // Make sure the current stimulus is not identical to the last one. Otherwise the display would look like it has not change
         initiateTest();
     } else {
@@ -51,10 +51,12 @@ function checkResponse(btnNum, stimID) {
 
     //Now check if the user's event is the correct one or not'
     if (btnNum == stimID) {
+        console.log("Yep");
         correctAnswers += 1;
 
     } else {
         wrongAnswers += 1;
+        console.log("Nope");
     }
     initiateTest();
 }
