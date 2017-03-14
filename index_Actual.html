@@ -1,71 +1,99 @@
-<!DOCTYPE html>
-<html>
 
-<head>
-    <title></title>
-    <meta charset="utf-8" />
-    <script src="https://code.jquery.com/jquery-3.0.0.js"></script>
-    <script src="SweetAlert/sweetalert.min.js"></script>
-    <script src="codingTaskJS.js"></script>
-    <link type="text/css" rel="stylesheet" href="myStyle.css" />
-    <link type="text/css" rel="stylesheet" href="SweetAlert/sweetalert.css" />
-</head>
+// These are decimal values of special characters 
+// taken from https://www.w3schools.com/charsets/ref_utf_greek.asp
+// NOTE: they do not show up in the console... only on the HTML page
+var cCharacters = ['&#916', '&#882', '&#952', '&#928', '&#965', '&#937', '&#990', '&#935', '&#926'];
+var cDigit = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+var stimulusID;
+var lastStimulus = 0; // I would like to make sure that I will not have two consecutive stimulus
+var correctAnswers = 0;
+var wrongAnswers = 0;
+var timingOfResponse = [];
 
-<body>
 
-    <div id="showCode">
-        <table id="tblCode">
-            <tr>
-                <th>&#916</th>
-                <th>&#882</th>
-                <th>&#952</th>
-                <th>&#928</th>
-                <th>&#965</th>
-                <th>&#937</th>
-                <th>&#990</th>
-                <th>&#935</th>
-                <th>&#926</th>
-            </tr>
-            <tr id="numNum">
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-                <td>5</td>
-                <td>6</td>
-                <td>7</td>
-                <td>8</td>
-                <td>9</td>
-            </tr>
-        </table>
-    </div>
 
-    <div id="codeArea">        
-        <h1 id="stimulus">X</h1>        
-    </div>
+$(document).ready(startPage);
 
-    <div id="btnArea">
-        <table id="tblButtons">
-            <tr>               
-                <td><button type="button" class="btnResponse" data-button="1">1</button></td>
-                <td><button type="button" class="btnResponse" data-button="2">2</button></td>
-                <td><button type="button" class="btnResponse" data-button="3">3</button></td>                
-            </tr>
-            <tr>               
-                <td><button type="button" class="btnResponse" data-button="4">4</button></td>
-                <td><button type="button" class="btnResponse" data-button="5">5</button></td>
-                <td><button type="button" class="btnResponse" data-button="6">6</button></td>                
-            </tr>
-            <tr>               
-                <td><button type="button" class="btnResponse" data-button="7">7</button></td>
-                <td><button type="button" class="btnResponse" data-button="8">8</button></td>
-                <td><button type="button" class="btnResponse" data-button="9">9</button></td>                
-            </tr>
-        </table>
-    </div>
+function startPage() {
+
+    //Set up the button as a trigger to the check event
+    $('.btnResponse').on('click', function () {
+        var eventTime = Math.floor(new Date().getTime() / 1000); // Record the user's repsponse time, and round it up, as the computer's format is 000.000 which is redundant in this case
+        timingOfResponse.push(eventTime); // Capture the time of the response
+        
+        var whichButton = $(this).attr('data-button');
+        checkResponse(whichButton, stimulusID + 1); // stimulusID is add 1 as I need to shift a place on the array...
+    });
+
+    //Initialize the timer
+    var startTime = new Date().getTime() / 1000; // Start time in seconds
+    var endTime = startTime + 120;
+    count120(endTime);
+
+    // Initialize the test
+    initiateTest();
+
+}
+function initiateTest() {
+
+    stimulusID = Math.floor((Math.random() * 9) + 0);
+    if (stimulusID == lastStimulus) { // Make sure the current stimulus is not identical to the last one. Otherwise the display would look like it has not change
+        initiateTest();
+    } else {
+        $("#stimulus").html(cCharacters[stimulusID]);    
+    }
     
+}
 
-</body>
+function checkResponse(btnNum, stimID) {
+    //store this stimulusID also as the lastStimulus
+    lastStimulus = stimulusID;
 
+    //Now check if the user's event is the correct one or not'
+    if (btnNum == stimID) {
+        console.log("Yep");
+        correctAnswers += 1;
 
-</html>
+    } else {
+        wrongAnswers += 1;
+        console.log("Nope");
+    }
+    initiateTest();
+}
+
+function count120(finishTime) {
+
+    var myTimer = setInterval(function () {
+        var currentTime = new Date().getTime() / 1000;
+        if (currentTime >= finishTime) {
+            endRoutine();
+            clearInterval(myTimer);
+        }
+    }, 1000);
+}
+
+function endRoutine() {
+    // ****** PASS THE FOLLOWING DATA TO THE DB *****************
+    
+    var totalReplies = correctAnswers + wrongAnswers;   // Processing speed is a function of how many REPLIES were made during 120 sec
+
+    console.log("total:" + totalReplies);
+    console.log("Correct:" + correctAnswers);
+    console.log("Wrong:" + wrongAnswers);
+    console.log("Timing:" + timingOfResponse);
+    
+    // End note...
+    
+    swal({
+                title: "Done !",
+                text: "We have reached the 120 seconds mark and this test is done :)",
+                type: "success",
+                showCancelButton: false,
+                confirmButtonColor: "#3ed63e",
+                confirmButtonText: "Click to proceed",
+                closeOnConfirm: false
+            },
+            function () {
+                window.location.href = "../MemoryGame/Memory_Instructions.html" // need to decide what will the the best place for this test to take place
+            });
+}
